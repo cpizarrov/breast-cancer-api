@@ -1,6 +1,7 @@
 import joblib
 import numpy as np
 import pandas as pd
+import os
 from fastapi import FastAPI, HTTPException, Query
 from pydantic import BaseModel, field_validator
 import uvicorn
