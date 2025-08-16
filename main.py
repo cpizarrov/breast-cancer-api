@@ -73,7 +73,7 @@ def order_and_validate(features: Dict[str, float]) -> pd.DataFrame:
         raise HTTPException(
             status_code=422,
             detail={
-                "msg": "Las claves de 'features' no coinciden con las esperadas (usa /features).",
+                "msg": "Las variables no coinciden con las esperadas (usa /features).",
                 "missing_features": missing,
                 "extra_features": extra,
                 "expected": FEATURE_NAMES
