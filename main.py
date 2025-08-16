@@ -5,7 +5,6 @@ import numpy as np
 import pandas as pd
 from fastapi import FastAPI, HTTPException, Query
 from pydantic import BaseModel, field_validator
-import uvicorn
 
 MODEL_PATH = "model/breast_cancer_logreg.joblib" 
 
@@ -91,7 +90,7 @@ def order_and_validate(features: Dict[str, float]) -> pd.DataFrame:
 
 @app.get("/")
 def home():
-    return {"msg": "API OK. Visita /docs para la UI de Swagger."}
+    return {"msg": "Perfecto! La API está ok."}
 
 @app.get("/health")
 def health():
@@ -123,8 +122,3 @@ def predict(body: PredictBody, confidence: float = Query(default=THRESHOLD, ge=0
         missing_features=[],
         extra_features=[],
     )
-
-# Arranque local
-if __name__ == "__main__":
-    # uvicorn main:app --reload
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
