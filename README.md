@@ -52,7 +52,6 @@ PRED   = f"{BASE}/predict"
 FEATS  = f"{BASE}/features"
 
 def warm_up(max_wait_s=420, initial_read_to=40, max_read_to=180, sleep_s=2):
-    """Despierta la instancia. Intenta GET /health con timeouts crecientes."""
     start = time.time(); attempt = 0; read_to = initial_read_to; connect_to = 6
     while True:
         attempt += 1
