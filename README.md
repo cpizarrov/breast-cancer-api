@@ -11,9 +11,11 @@ El dataset cuenta con:
 
 Por cada núcleo celular se extraen la media (mean), el error estándar (error) y el peor valor (worst) de estos 10 atributos: radio, textura, perímetro, área, suavidad, compacidad, concavidad, puntos cóncavos, simetría y dimensión fractal.
 
+*Nota: Para efectos del modelo, Benigno (B) = 0 y Maligno (M) = 1.*
+
 ## Realizando consultas a la API a través de Python
 
-Las siguientes instrucciones han sido ajustadas para poder ser ejecutadas a través de google collab. 
+Las siguientes instrucciones han sido ajustadas para poder ser ejecutadas en la siguiente [planilla de google collab](https://colab.research.google.com/drive/1gNcbb-4dmE9XKaFZqeL5Ff4rmWcoZyaW?usp=sharing), la cual puedes utilizar sólo ajustando los datos del payload. 
 
 ### URL de la API
 
@@ -21,10 +23,20 @@ Las siguientes instrucciones han sido ajustadas para poder ser ejecutadas a trav
 https://breast-cancer-api-37mk.onrender.com
 ```
 
-### Instala las dependencias 
+### Prepara las dependencias
+
+La única dependedencia que se necesita instalar para realizar consultas a la API es **requests**. 
 
 ```bash
-pip install -r https://raw.githubusercontent.com/cpizarrov/breast-cancer-api/main/requirements.txt
+pip install requests
+```
+
+También necesitaremos importar las librerías *time* y *json*.
+
+```bash
+import requests
+import time
+import json
 ```
 
 ### Prepara la URL y define una función de warm-up
@@ -34,11 +46,9 @@ Dado que estamos utilizando un plan gratuito de render, necesitamos "despertar" 
 Puedes preparar la URL y la instancia utilizando el siguiente código: 
 
 ```bash
-import time, json, requests
-
 BASE = "https://breast-cancer-api-37mk.onrender.com"
 HEALTH = f"{BASE}/health"
-PRED   = f"{BASE}/predict"   # umbral fijo: 0.5
+PRED   = f"{BASE}/predict"
 FEATS  = f"{BASE}/features"
 
 def warm_up(max_wait_s=420, initial_read_to=40, max_read_to=180, sleep_s=2):
@@ -64,9 +74,9 @@ warm_up()
 
 ### Estructura de los datos de entrada
 
-Debes entregar un archivo JSON que contenga la clave **features**. Al interior de ésta, deben estar contenidas 30 claves que coincidan exactamente con los nombres de las variables de **/features**, y cuyos valores asociados sean de tipo float (numéricos continuos). 
+Debes entregar un archivo JSON que contenga la clave **features**. Al interior de ésta, deben estar contenidas 30 claves que coincidan exactamente con los nombres de las variables de **/features**, y cuyos valores asociados sean de tipo flotante.
 
-Aquí tienes un payload de ejemplo: 
+Aquí tienes un payload de ejemplo, con los nombres correspondientes de las variables: 
 
 ```bash
 payload_ejemplo = {
@@ -105,9 +115,38 @@ payload_ejemplo = {
 }
 ```
 
+### Solicita tus predicciones
+
+Utiliza el siguiente código para enviar tu consulta
+
+```bash
+resp = requests.post(PRED, json=payload_ejemplo, timeout=(6, 180))
+print("HTTP", resp.status_code)
+print(json.dumps(resp.json(), indent=2, ensure_ascii=False))
+```
+
+Obtendrás una respuesta de este estilo: 
+
+```bash
+HTTP 200
+{
+  "predicted_class": 1,
+  "prob_maligno": 0.9999572315866951,
+  "label": "M",
+  "threshold_used": 0.5721941718081877,
+  "missing_features": [],
+  "extra_features": []
+}
+```
+Donde:
+- **predicted_class:** 0 = Benigno (B) y 1 = Maligno (M).
+- **prob_maligno:** Probabilidad de que sea "Maligno". 
+- **label:** Etiqueta de la clase predicha ("M" o "B").
+- **threshold_used:** Umbral de decisión utilizado.
+
 ### Errores típicos: 
 
-Si ingresas un string como valor, se te solicitará ingresar un valor numérico válido. Al mismo tiempo, se te indicará cuál es el valor incorrecto que incorporaste en el payload (Error 422). 
+Si ingresas un string como valor, se te solicitará ingresar un valor numérico válido. Al mismo tiempo, se te indicará cuál es el valor incorrecto que incorporaste en el payload. 
 
 ```bash
 HTTP 422
@@ -127,7 +166,7 @@ HTTP 422
 }
 ```
 
-Si ingresas mal el nombre de una variable, se te indicará que el nombre de las variables no coinciden con las esperadas (Error 422). Al mismo tiempo, si falta o sobra alguna variable, se te indicará dentro de los campos **missing_features** o **extra_features**.
+Si ingresas mal el nombre de una variable, se te indicará que el nombre de las variables no coinciden con las esperadas. Al mismo tiempo, si falta o sobra alguna variable, se te indicará dentro de los campos **missing_features** o **extra_features**.
 
 ```bash
 HTTP 422
@@ -138,14 +177,4 @@ HTTP 422
       "worst fractal dimension"
     ],
     "extra_features": [], (...)
-```
-
-### Solicita tus predicciones
-
-Utiliza el siguiente código para enviar tu consulta
-
-```bash
-resp = requests.post(PRED, json=payload_ejemplo, timeout=(6, 180))
-print("HTTP", resp.status_code)
-print(json.dumps(resp.json(), indent=2, ensure_ascii=False))
 ```
